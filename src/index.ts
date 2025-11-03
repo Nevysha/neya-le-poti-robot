@@ -1,59 +1,58 @@
-import dotenv from "dotenv";
-import { Command } from "commander";
+import { REST, Routes } from 'discord.js';
+import dotenv from 'dotenv';
+import { PotiRobotClientWrapper, TEnv } from './PotiRobotClientWrapper.ts';
 
-const env = dotenv.config({ path: '.env' }).parsed as { [key: string]: string };
+const mode = process.env.NODE_ENV || 'development';
+dotenv.config({ path: '.env' });
+dotenv.config({ path: `./.env.local`, override: true });
+dotenv.config({ path: `./.env.${mode}`, override: true });
+dotenv.config({ path: `./.env.${mode}.local`, override: true });
+const env = process.env as TEnv;
 
-const events = async () => {
-  const events = await (await fetch(`https://discord.com/api/v10/guilds/${env.GUILD_ID}/scheduled-events`, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bot ${env.DISCORD_TOKEN}`
-    }
-  } )).json();
-  console.log(events)
+async function refreshCommands() {
+  const rest = new REST({ version: '10' }).setToken(env.DISCORD_TOKEN);
 
-  // /guilds/{guild.id}/scheduled-events/{guild_scheduled_event.id}/users
-  for (const event of events) {
-    console.log(event)
-
-    const subscribedUsers = await (await fetch('https://discord.com/api/v10/guilds/' + env.GUILD_ID + '/scheduled-events/' + event.id + '/users', {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bot ${env.DISCORD_TOKEN}`
-      }
-    })).json();
-
-    console.log(`Event: ${event.name} - Subscribed Users:`, subscribedUsers);
-  }
-};
-
-const message = async () => {
-  // test sending a message to the channel #calendrier-ffxiv-test
-  const channels = await (await fetch('https://discord.com/api/v10/guilds/' + env.GUILD_ID + '/channels', {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bot ${env.DISCORD_TOKEN}`
-    }
-  })).json();
-
-  // search for the channel
-  const channel = channels.find(channel => channel.name === 'calendrier-ffxiv-test');
-  console.log(channel)
-
-  const message = await (await fetch('https://discord.com/api/v10/channels/' + channel.id + '/messages', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bot ${env.DISCORD_TOKEN}`,
-      'Content-Type': 'application/json'
+  const commands = [
+    {
+      name: 'ping',
+      description: 'Replies with Pong!',
     },
-    body: JSON.stringify({
-      content: 'Blep!'
-    })
-  }))
+  ];
+
+  try {
+    console.log('Started refreshing application (/) commands.');
+
+    await rest.put(Routes.applicationCommands(env.APP_ID), { body: commands });
+
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
+  }
 }
 
+(async () => {
+  await refreshCommands();
 
-const program = new Command();
-program.command('events').action(events);
-program.command('message').action(message);
-program.parse();
+  const clientWrapper: PotiRobotClientWrapper =
+    await PotiRobotClientWrapper.start(env);
+
+  const guildManager = clientWrapper.nativeReadyClient.guilds;
+  const lazyGuilds = await guildManager.fetch();
+  for (const [_guildId, lazyGuild] of lazyGuilds) {
+    const guild = await lazyGuild.fetch();
+
+    // ignore guild neyaneyaneya atm
+    if (guild.name === 'neyaneyaneya') {
+      console.log(`Skipping guild ${guild.name}`);
+      continue;
+    }
+
+    console.log(`Fetching for guild ${guild.name}`);
+
+    await clientWrapper.clearMessages(guild);
+
+    await clientWrapper.prepareAndSendEventRecap(guild);
+
+    await clientWrapper.maybeSendReadyMessages(guild);
+  }
+})();
