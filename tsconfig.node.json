@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./.tsbuildinfo/tsconfig.base.node.tsbuildinfo",
+    "skipLibCheck": true,
+    "target": "esnext",
+    "lib": ["esnext"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "emitDeclarationOnly": true,
+    "strictNullChecks": null,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "allowSyntheticDefaultImports": true,
+    "types": ["node"],
+    "outDir": "./var/tsc/node.out",
+    "composite": true,
+    "paths": {},
+    "baseUrl": "./",
+    "strict": true,
+    "esModuleInterop": true
+  },
+  "exclude": ["./tsconfig/out/*"],
+  "include": [
+    "eslint.config.ts",
+    "./vite/*.ts",
+    "./eslint/*.ts",
+    "eslint*.json",
+    "prettier/**/*.json5",
+    "prettier/**/*.json",
+    "src/**/*.ts",
+    "src"
+  ]
+}
