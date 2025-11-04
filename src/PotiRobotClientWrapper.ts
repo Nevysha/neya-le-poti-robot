@@ -124,21 +124,6 @@ export class PotiRobotClientWrapper {
     for (const [_eventId, event] of events) {
       const subscribers = await event.fetchSubscribers();
 
-      const subscriberDirectApi = await (
-        await fetch(
-          `https://discord.com/api/guilds/${guild.id}/scheduled-events/${event.id}/users`,
-          {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bot ${this.env.DISCORD_TOKEN}`,
-            },
-          },
-        )
-      ).json();
-
-      console.log(subscriberDirectApi);
-
       const startTimeStamp = event.scheduledStartTimestamp;
       if (!startTimeStamp) {
         console.warn('Event has no scheduled start timestamp');
