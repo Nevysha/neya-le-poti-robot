@@ -63,6 +63,13 @@ const env = process.env as TEnv;
     },
   );
 
+  clientWrapper.nativeReadyClient.on(
+    Events.GuildScheduledEventUserAdd,
+    async (event) => {
+      console.log(`New user joined event ${event.name}`);
+    },
+  );
+
   const commands =
     await clientWrapper.nativeReadyClient.application.commands.fetch();
   console.log(commands.map((command) => command.name).join(', '));
