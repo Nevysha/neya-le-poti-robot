@@ -49,6 +49,7 @@ export class PotiRobotClientWrapper {
           console.log(`Ready! Logged in as ${readyClient.user.tag}`);
           resolve(new PotiRobotClientWrapper(env, readyClient));
         });
+
         await client.login(env.DISCORD_TOKEN);
       } catch (error) {
         reject(error);
@@ -68,15 +69,21 @@ export class PotiRobotClientWrapper {
 
     console.log(`Clearing messages for guild ${guild.name}`);
 
-    try {
-      const channel = await this.getChannel(guild);
-      await channel.messages.fetch();
-      await channel.bulkDelete(channel.messages.cache);
-    } catch (error) {
-      console.error(error);
-      return;
-    }
+    const channel = await this.getChannel(guild);
+    await channel.messages.fetch();
+    await channel.bulkDelete(channel.messages.cache);
   }
+
+  channels = {
+    TDJ: {
+      prod: 'calendrier-ffxiv',
+      test: 'calendrier-ffxiv-test',
+    },
+    neyaneyaneya: {
+      prod: 'dev',
+      test: 'dev',
+    },
+  } as Record<string, { prod: string; test: string } | null>;
 
   /**
    * Get a valid channel to send messages
@@ -87,10 +94,15 @@ export class PotiRobotClientWrapper {
     // collecting channels
     const channels = await guild.channels.fetch();
     // get calendrier-ffxiv-test or calendrier-ffxiv
-    const channelName =
-      this.env.IS_TEST === 'true' ?
-        'calendrier-ffxiv-test'
-      : 'calendrier-ffxiv';
+    const testOrProd = this.env.IS_TEST === 'true' ? 'test' : 'prod';
+    const channelName = this.channels[guild.name]?.[testOrProd];
+
+    if (!channelName) {
+      throw new Error(
+        `Channel not found for guild ${guild.name} for env ${testOrProd}`,
+      );
+    }
+
     const channelUnsafeType = channels.find(
       (channel) => channel?.name === channelName,
     );
@@ -144,24 +156,27 @@ export class PotiRobotClientWrapper {
       );
       const mainContainer = new ContainerBuilder().setAccentColor(0xe0569b);
 
-      const sectionBuilder = new SectionBuilder()
-        .addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent('# ' + event.name + '\n\n' + formattedDate),
-        )
-        .addTextDisplayComponents((textDisplay) =>
-          textDisplay.setContent(event.url),
-        );
-      const coverImageURL = event.coverImageURL();
+      const header = new TextDisplayBuilder().setContent(
+        '# ' + event.name + '\n\n' + formattedDate,
+      );
+      const eventUrl = new TextDisplayBuilder().setContent(event.url);
 
+      const coverImageURL = event.coverImageURL();
       if (coverImageURL) {
+        const sectionBuilder = new SectionBuilder()
+          .addTextDisplayComponents(header)
+          .addTextDisplayComponents(eventUrl);
+
         sectionBuilder.setThumbnailAccessory((thumbnail) =>
           thumbnail
             .setDescription('Calendrier FFXIV - Événement: ' + event.name)
             .setURL(coverImageURL),
         );
+        mainContainer.addSectionComponents(sectionBuilder);
+      } else {
+        mainContainer.addTextDisplayComponents(header);
+        mainContainer.addTextDisplayComponents(eventUrl);
       }
-
-      mainContainer.addSectionComponents(sectionBuilder);
 
       mainContainer.addSeparatorComponents((separator) => separator);
       const textDisplay: TextDisplayBuilder = new TextDisplayBuilder();
@@ -241,16 +256,11 @@ export class PotiRobotClientWrapper {
     guild: Guild,
     components: BaseMessageOptions['components'],
   ) {
-    try {
-      const channel = await this.getChannel(guild);
-      await channel.send({
-        components: components,
-        flags: MessageFlags.IsComponentsV2,
-      });
-    } catch (error) {
-      console.error(error);
-      return;
-    }
+    const channel = await this.getChannel(guild);
+    await channel.send({
+      components: components,
+      flags: MessageFlags.IsComponentsV2,
+    });
   }
 
   /**

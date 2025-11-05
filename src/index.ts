@@ -1,4 +1,4 @@
-import { Events } from 'discord.js';
+import { Events, Guild } from 'discord.js';
 import dotenv from 'dotenv';
 import { PotiRobotClientWrapper, TEnv } from './PotiRobotClientWrapper.ts';
 
@@ -16,49 +16,58 @@ const env = process.env as TEnv;
   /**
    * Refresh events for all guilds
    */
-  const refreshEvents = async () => {
-    const guildManager = clientWrapper.nativeReadyClient.guilds;
-    const lazyGuilds = await guildManager.fetch();
-    for (const [_guildId, lazyGuild] of lazyGuilds) {
-      const guild = await lazyGuild.fetch();
+  const refreshEvents = async (guild: Guild) => {
+    guild = await guild.fetch();
 
-      // ignore guild neyaneyaneya atm
-      if (guild.name === 'neyaneyaneya') {
-        console.log(`Skipping guild ${guild.name}`);
-        continue;
-      }
+    console.log(`Fetching for guild ${guild.name}`);
 
-      console.log(`Fetching for guild ${guild.name}`);
+    await clientWrapper.clearMessages(guild);
 
-      await clientWrapper.clearMessages(guild);
+    await clientWrapper.prepareAndSendEventRecap(guild);
 
-      await clientWrapper.prepareAndSendEventRecap(guild);
-
-      await clientWrapper.maybeSendReadyMessages(guild);
-    }
+    await clientWrapper.maybeSendReadyMessages(guild);
   };
 
   clientWrapper.nativeReadyClient.on(
     Events.InteractionCreate,
     async (interaction) => {
-      if (!interaction.isChatInputCommand()) return;
+      try {
+        if (!interaction.isChatInputCommand()) return;
+        if (!interaction.inGuild()) return;
 
-      const { commandName } = interaction;
-      console.log(`Command ${commandName} received`);
+        const guild = interaction.guild;
+        if (!guild) {
+          console.log('Guild not found');
+          await interaction.reply('This command can only be used in a guild.');
+          return;
+        }
 
-      switch (commandName) {
-        case 'ping':
-          await interaction.reply('Pong!');
-          break;
-        case 'refresh-events':
-          // do not await
-          void refreshEvents();
-          await interaction.reply('Refreshing events...');
-          break;
-        default:
-          console.log(`Unknown command ${commandName}`);
-          await interaction.reply('Unknown command');
-          break;
+        const { commandName } = interaction;
+        console.log(`Command ${commandName} received`);
+
+        switch (commandName) {
+          case 'ping':
+            await interaction.reply('Pong!');
+            break;
+          case 'refresh-events':
+            // do not await
+            void refreshEvents(guild);
+            await interaction.reply('Refreshing events...');
+            break;
+          default:
+            console.log(`Unknown command ${commandName}`);
+            await interaction.reply('Unknown command');
+            break;
+        }
+      } catch (e) {
+        console.error('Error handling interaction:');
+        console.error(interaction);
+        console.error(e);
+        if (interaction.isRepliable()) {
+          await interaction.reply(
+            'Unknown error occurred while processing the command.',
+          );
+        }
       }
     },
   );
@@ -67,6 +76,38 @@ const env = process.env as TEnv;
     Events.GuildScheduledEventUserAdd,
     async (event) => {
       console.log(`New user joined event ${event.name}`);
+    },
+  );
+
+  clientWrapper.nativeReadyClient.on(
+    Events.GuildScheduledEventCreate,
+    async (guildEvent) => {
+      const guild = guildEvent.guild;
+      if (!guild) {
+        console.error('Guild not found');
+        return;
+      }
+
+      console.log(`New event created: ${guildEvent.name}`);
+      await clientWrapper.prepareAndSendEventRecap(guild);
+    },
+  );
+
+  clientWrapper.nativeReadyClient.on(
+    Events.GuildScheduledEventUpdate,
+    async (guildEvent) => {
+      if (!guildEvent) {
+        console.error('Guild event not found');
+        return;
+      }
+      const guild = guildEvent.guild;
+      if (!guild) {
+        console.error('Guild not found');
+        return;
+      }
+
+      console.log(`New event created: ${guildEvent.name}`);
+      await clientWrapper.prepareAndSendEventRecap(guild);
     },
   );
 
