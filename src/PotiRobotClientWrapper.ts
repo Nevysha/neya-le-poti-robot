@@ -13,12 +13,8 @@ import {
   TextChannel,
   TextDisplayBuilder,
 } from 'discord.js';
-
-export type TEnv = {
-  DISCORD_TOKEN: string;
-  IS_TEST: string;
-  APP_ID: string;
-};
+import { Env } from './Env.ts';
+import { db } from './database.ts';
 
 /**
  * Wrapper around the native discord client to add some features
@@ -27,30 +23,29 @@ export class PotiRobotClientWrapper {
   /**
    * Constructor
    *
-   * @param env
    * @param nativeReadyClient
    */
-  constructor(
-    private env: TEnv,
-    public nativeReadyClient: Client<true>,
-  ) {}
+  constructor(public nativeReadyClient: Client<true>) {}
 
   /**
    * Bootstrap and Start the client
    *
-   * @param env
    */
-  static async start(env: TEnv): Promise<PotiRobotClientWrapper> {
+  static async start(): Promise<PotiRobotClientWrapper> {
     const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
     return new Promise(async (resolve, reject) => {
       try {
         client.once(Events.ClientReady, async (readyClient) => {
           console.log(`Ready! Logged in as ${readyClient.user.tag}`);
-          resolve(new PotiRobotClientWrapper(env, readyClient));
+
+          const commands = await readyClient.application.commands.fetch();
+          console.log(commands.map((command) => command.name).join(', '));
+
+          resolve(new PotiRobotClientWrapper(readyClient));
         });
 
-        await client.login(env.DISCORD_TOKEN);
+        await client.login(Env.DISCORD_TOKEN);
       } catch (error) {
         reject(error);
       }
@@ -63,10 +58,6 @@ export class PotiRobotClientWrapper {
    * @param guild
    */
   public async clearMessages(guild: Guild) {
-    if (!this.env.IS_TEST) {
-      return;
-    }
-
     console.log(`Clearing messages for guild ${guild.name}`);
 
     const channel = await this.getChannel(guild);
@@ -91,10 +82,8 @@ export class PotiRobotClientWrapper {
    * @param guild
    */
   public async getChannel(guild: Guild) {
-    // collecting channels
-    const channels = await guild.channels.fetch();
     // get calendrier-ffxiv-test or calendrier-ffxiv
-    const testOrProd = this.env.IS_TEST === 'true' ? 'test' : 'prod';
+    const testOrProd = Env.IS_TEST === 'true' ? 'test' : 'prod';
     const channelName = this.channels[guild.name]?.[testOrProd];
 
     if (!channelName) {
@@ -102,6 +91,13 @@ export class PotiRobotClientWrapper {
         `Channel not found for guild ${guild.name} for env ${testOrProd}`,
       );
     }
+
+    return await this.findGuildChannel(guild, channelName);
+  }
+
+  private async findGuildChannel(guild: Guild, channelName: string) {
+    // collecting channels
+    const channels = await guild.channels.fetch();
 
     const channelUnsafeType = channels.find(
       (channel) => channel?.name === channelName,
@@ -126,14 +122,25 @@ export class PotiRobotClientWrapper {
    * @param guild
    */
   public async prepareAndSendEventRecap(guild: Guild) {
+    const [savedGuild] = await db.Guild.findOrCreate({
+      where: {
+        discordId: guild.id,
+        name: guild.name,
+      },
+    });
+
     const events = await guild.scheduledEvents.fetch();
     console.log(
       `Found events ${events.map((event) => event.name).join(', ')} `,
     );
 
-    const components = [];
-
     for (const [_eventId, event] of events) {
+      const [savedEvent] = await db.ScheduledEvent.findOrCreate({
+        where: {
+          discordId: event.id,
+        },
+      });
+
       const subscribers = await event.fetchSubscribers();
 
       const startTimeStamp = event.scheduledStartTimestamp;
@@ -189,11 +196,54 @@ export class PotiRobotClientWrapper {
 
       mainContainer.addTextDisplayComponents(textDisplay);
 
-      components.push(mainContainer);
-    }
+      const savedScheduledEventMessage = await db.ScheduledEventMessage.findOne(
+        {
+          where: {
+            scheduledEventId: savedEvent.get('id'),
+          },
+        },
+      );
 
-    if (components.length > 0) {
-      await this.send(guild, components);
+      // only send message if not already sent
+      if (savedScheduledEventMessage === null) {
+        const msg = await this.send(guild, [mainContainer]);
+
+        const savedBotMessage = await db.BotMessage.create({
+          discordId: msg.id,
+          guildId: savedGuild.get('id'),
+        });
+
+        await db.ScheduledEventMessage.create({
+          scheduledEventId: savedEvent.get('id'),
+          botMessageId: savedBotMessage.get('id'),
+        });
+        return;
+      }
+
+      // else, update the existing message
+      const savedBotMessage = await db.BotMessage.findOne({
+        where: {
+          id: savedScheduledEventMessage.get('botMessageId'),
+        },
+      });
+      if (savedBotMessage === null) {
+        throw new Error(
+          `BotMessage not found for scheduled event ${savedEvent.get('id')}`,
+        );
+      }
+
+      const discordMsg = await (
+        await this.getChannel(guild)
+      ).messages.fetch(savedBotMessage.get('discordId') as string);
+      if (discordMsg === null) {
+        throw new Error(
+          `Discord message not found for bot message ${savedBotMessage.get('id')}`,
+        );
+      }
+      await discordMsg.edit({
+        components: [mainContainer],
+        flags: MessageFlags.IsComponentsV2,
+      });
     }
   }
 
@@ -218,12 +268,10 @@ export class PotiRobotClientWrapper {
    *
    * @param guild
    * @param event
-   * @param force
    */
   public async maybeSendReadyMessagesForEvent(
     guild: Guild,
     event: GuildScheduledEvent<GuildScheduledEventStatus>,
-    force: boolean = false,
   ) {
     const subscribers = await event.fetchSubscribers();
     console.log(
@@ -233,14 +281,15 @@ export class PotiRobotClientWrapper {
     // check if event start in less than 10 minutes
     const THRESHOLD_MS = 10 * 60 * 1000;
     const startTimeStamp = event.scheduledStartTimestamp ?? 0;
-    console.log(
-      `Event ${event.name} starting in ${(startTimeStamp - Date.now()) / 1000} seconds`,
-    );
-    if (startTimeStamp - Date.now() > THRESHOLD_MS && !force) {
-      console.log(`Event ${event.name} starting in more than 10 minutes`);
+    const startingIn = startTimeStamp - Date.now();
+    if (startingIn > THRESHOLD_MS || startingIn < 0) {
+      console.log(
+        `Event ${event.name} starting in more than 10 minutes or in the past`,
+      );
       return;
     }
 
+    console.log(`Event ${event.name} starting in ${startingIn / 1000} seconds`);
     const components = await this.prepareGetReadyMessage(event);
 
     await this.send(guild, components);
@@ -257,7 +306,7 @@ export class PotiRobotClientWrapper {
     components: BaseMessageOptions['components'],
   ) {
     const channel = await this.getChannel(guild);
-    await channel.send({
+    return await channel.send({
       components: components,
       flags: MessageFlags.IsComponentsV2,
     });
@@ -290,27 +339,38 @@ export class PotiRobotClientWrapper {
     });
     const mainContainer = new ContainerBuilder().setAccentColor(0x0099ff);
 
-    const sectionBuilder = new SectionBuilder()
-      .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent('# Préparez-vous !'),
-      )
-      .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent('## ' + event.name + '\n\n' + formattedDate),
-      )
-      .addTextDisplayComponents((textDisplay) =>
-        textDisplay.setContent("L'événement commence bientôt !"),
-      );
     const coverImageURL = event.coverImageURL();
 
     if (coverImageURL) {
+      const sectionBuilder = new SectionBuilder()
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('# Préparez-vous !'),
+        )
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('## ' + event.name + '\n\n' + formattedDate),
+        )
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent("L'événement commence bientôt !"),
+        );
+
       sectionBuilder.setThumbnailAccessory((thumbnail) =>
         thumbnail
           .setDescription('Calendrier FFXIV - Événement: ' + event.name)
           .setURL(coverImageURL),
       );
+      mainContainer.addSectionComponents(sectionBuilder);
+    } else {
+      mainContainer
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('# Préparez-vous !'),
+        )
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent('## ' + event.name + '\n\n' + formattedDate),
+        )
+        .addTextDisplayComponents((textDisplay) =>
+          textDisplay.setContent("L'événement commence bientôt !"),
+        );
     }
-
-    mainContainer.addSectionComponents(sectionBuilder);
 
     mainContainer.addSeparatorComponents((separator) => separator);
     const textDisplay: TextDisplayBuilder = new TextDisplayBuilder();
@@ -324,5 +384,92 @@ export class PotiRobotClientWrapper {
     mainContainer.addTextDisplayComponents(textDisplay);
 
     return [mainContainer];
+  }
+
+  on: Client['on'] = (
+    event: Parameters<Client['on']>[0],
+    listener: Parameters<Client['on']>[1],
+  ) => {
+    this.nativeReadyClient.on(event, listener);
+    return this.nativeReadyClient;
+  };
+
+  public async refreshEvents(guild: Guild) {
+    guild = await guild.fetch();
+
+    console.log(`Fetching for guild ${guild.name}`);
+
+    await this.prepareAndSendEventRecap(guild);
+
+    await this.maybeSendReadyMessages(guild);
+
+    console.log(`Finished refreshing events for guild ${guild.name}`);
+  }
+
+  public async maybeInitData() {
+    const guilds = await this.nativeReadyClient.guilds.fetch();
+
+    let mustCreateChannels = false;
+    const allSavedChannels = await db.Channel.findAll();
+    if (allSavedChannels.length === 0) {
+      console.log('No channels found in database. Channels will be created...');
+      mustCreateChannels = true;
+    }
+
+    for (const [_guildId, lazyGuild] of guilds) {
+      console.log(`Processing guild ${lazyGuild.name}`);
+      const guild = await lazyGuild.fetch();
+      // check if guild exists in database
+      let [savedGuild] = await db.Guild.findOrCreate({
+        where: {
+          discordId: lazyGuild.id,
+          name: lazyGuild.name,
+        },
+      });
+
+      if (mustCreateChannels) {
+        const prodName = this.channels[lazyGuild.name]?.prod;
+        if (!prodName) {
+          throw new Error(
+            `No default prod channel for guild ${lazyGuild.name}`,
+          );
+        }
+        const testName = this.channels[lazyGuild.name]?.test;
+        if (!testName) {
+          throw new Error(
+            `No default test channel for guild ${lazyGuild.name}`,
+          );
+        }
+
+        await db.Channel.create({
+          discordId: (await this.findGuildChannel(guild, prodName)).id,
+          isProd: true,
+          guildId: savedGuild.get('id'),
+          name: prodName,
+        });
+        await db.Channel.create({
+          discordId: (await this.findGuildChannel(guild, testName)).id,
+          isProd: false,
+          guildId: savedGuild.get('id'),
+          name: testName,
+        });
+      }
+
+      const events = await guild.scheduledEvents.fetch();
+      console.log(
+        `Found events ${events.map((event) => event.name).join(', ')} `,
+      );
+
+      for (const [_eventId, event] of events) {
+        console.log(`Processing event ${event.name}`);
+        await db.ScheduledEvent.findOrCreate({
+          where: {
+            discordId: event.id,
+          },
+        });
+      }
+
+      // clear channel if no BotMessage exists for this guild
+    }
   }
 }
