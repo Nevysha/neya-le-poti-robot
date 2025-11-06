@@ -61,7 +61,11 @@ const ScheduledEvent = sequelize.define('scheduled_event', {
   },
   name: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
+  },
+  readyMessageSent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
 
   /**

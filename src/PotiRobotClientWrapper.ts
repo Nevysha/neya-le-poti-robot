@@ -144,7 +144,6 @@ export class PotiRobotClientWrapper {
       const [savedEvent] = await db.ScheduledEvent.findOrCreate({
         where: {
           discordId: event.id,
-          name: event.name,
         },
       });
 
@@ -173,7 +172,8 @@ export class PotiRobotClientWrapper {
         continue;
       }
 
-      // update event hash
+      // update event
+      savedEvent.set('name', event.name);
       savedEvent.set('hash', receivedEventHash);
       await savedEvent.save();
 
@@ -295,9 +295,6 @@ export class PotiRobotClientWrapper {
    */
   public async maybeSendReadyMessages(guild: Guild) {
     const events = await guild.scheduledEvents.fetch();
-    console.log(
-      `Found events ${events.map((event) => event.name).join(', ')} `,
-    );
 
     for (const [_eventId, event] of events) {
       await this.maybeSendReadyMessagesForEvent(guild, event);
@@ -314,6 +311,23 @@ export class PotiRobotClientWrapper {
     guild: Guild,
     event: GuildScheduledEvent<GuildScheduledEventStatus>,
   ) {
+    const savedEvent = await db.ScheduledEvent.findOne({
+      where: {
+        discordId: event.id,
+        name: event.name,
+      },
+    });
+
+    if (savedEvent === null) {
+      throw new Error(`Event ${event.name} not found in database`);
+    }
+
+    const readyMessageSent = savedEvent.get('readyMessageSent');
+    if (readyMessageSent) {
+      console.log(`Event ${event.name}: get ready message already sent`);
+      return;
+    }
+
     // check if event start in less than 10 minutes
     const THRESHOLD_MS = 10 * 60 * 1000;
     const startTimeStamp = event.scheduledStartTimestamp ?? 0;
@@ -329,6 +343,11 @@ export class PotiRobotClientWrapper {
     const components = await this.prepareGetReadyMessage(event);
 
     await this.send(guild, components);
+
+    // update readyMessageSent
+    savedEvent.set('readyMessageSent', true);
+    await savedEvent.save();
+    console.log(`Event ${event.name}: get ready message sent`);
   }
 
   /**

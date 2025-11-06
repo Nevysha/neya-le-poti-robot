@@ -107,5 +107,18 @@ import { databaseInit, db } from './database.ts';
     await clientWrapper.prepareAndSendEventRecap(guild);
   });
 
+  // repeat clientWrapper.refreshEvents(guild); every minute
+  const taskFn = async () => {
+    console.log('Running scheduled refresh task');
+    // get all guilds
+    const guilds = await clientWrapper.nativeReadyClient.guilds.fetch();
+    for (const lazyGuild of guilds.values()) {
+      const guild = await lazyGuild.fetch();
+      await clientWrapper.refreshEvents(guild);
+    }
+  };
+  console.log('Setting up refresh task to run every minute.');
+  setInterval(taskFn, 60000);
+
   console.log('Ready. Waiting...');
 })();
