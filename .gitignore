@@ -1,3 +1,4 @@
 /.env
 /.env.prod
 /database.sqlite
+/node_modules/
