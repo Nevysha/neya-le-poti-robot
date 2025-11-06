@@ -129,9 +129,15 @@ export class PotiRobotClientWrapper {
       },
     });
 
-    const events = await guild.scheduledEvents.fetch();
+    const unSortedEvents = await guild.scheduledEvents.fetch();
+
+    // sort events by scheduledStartTimestamp
+    const events = unSortedEvents.sort(
+      (a, b) =>
+        (a.scheduledStartTimestamp ?? 0) - (b.scheduledStartTimestamp ?? 0),
+    );
     console.log(
-      `Found events ${events.map((event) => event.name).join(', ')} `,
+      `Found ${events.size} events [${events.map((event) => event.name).join(', ')}]`,
     );
 
     for (const [_eventId, event] of events) {
@@ -146,7 +152,7 @@ export class PotiRobotClientWrapper {
       const startTimeStamp = event.scheduledStartTimestamp;
       if (!startTimeStamp) {
         console.warn('Event has no scheduled start timestamp');
-        return;
+        continue;
       }
 
       // format to locale fr-FR in format dd/mm/yyyy hh:mm:ss
@@ -217,7 +223,7 @@ export class PotiRobotClientWrapper {
           scheduledEventId: savedEvent.get('id'),
           botMessageId: savedBotMessage.get('id'),
         });
-        return;
+        continue;
       }
 
       // else, update the existing message
@@ -273,17 +279,12 @@ export class PotiRobotClientWrapper {
     guild: Guild,
     event: GuildScheduledEvent<GuildScheduledEventStatus>,
   ) {
-    const subscribers = await event.fetchSubscribers();
-    console.log(
-      `Event: ${event.name} - Subscribers: ${subscribers.map((sub) => sub.user.tag).join(',')}`,
-    );
-
     // check if event start in less than 10 minutes
     const THRESHOLD_MS = 10 * 60 * 1000;
     const startTimeStamp = event.scheduledStartTimestamp ?? 0;
     const startingIn = startTimeStamp - Date.now();
     if (startingIn > THRESHOLD_MS || startingIn < 0) {
-      console.log(
+      console.debug(
         `Event ${event.name} starting in more than 10 minutes or in the past`,
       );
       return;
