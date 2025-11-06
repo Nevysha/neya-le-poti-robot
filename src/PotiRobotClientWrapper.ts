@@ -14,7 +14,7 @@ import {
   TextDisplayBuilder,
 } from 'discord.js';
 import { Env } from './Env.ts';
-import { db } from './database.ts';
+import { createScheduledEventHash, db } from './database.ts';
 
 /**
  * Wrapper around the native discord client to add some features
@@ -144,10 +144,38 @@ export class PotiRobotClientWrapper {
       const [savedEvent] = await db.ScheduledEvent.findOrCreate({
         where: {
           discordId: event.id,
+          name: event.name,
         },
       });
 
+      const savedScheduledEventMessage = await db.ScheduledEventMessage.findOne(
+        {
+          where: {
+            scheduledEventId: savedEvent.get('id'),
+          },
+        },
+      );
+
       const subscribers = await event.fetchSubscribers();
+
+      const receivedEventHash = createScheduledEventHash({
+        name: event.name,
+        scheduledStartTimestamp: event.scheduledStartTimestamp ?? 0,
+        subscribers: Array.from(subscribers.keys()),
+      });
+
+      // check if event hash is the same as the one in the database
+      if (
+        savedScheduledEventMessage !== null &&
+        receivedEventHash === savedEvent.get('hash')
+      ) {
+        console.log(`No change on event ${event.name}. Skipping.`);
+        continue;
+      }
+
+      // update event hash
+      savedEvent.set('hash', receivedEventHash);
+      await savedEvent.save();
 
       const startTimeStamp = event.scheduledStartTimestamp;
       if (!startTimeStamp) {
@@ -202,21 +230,28 @@ export class PotiRobotClientWrapper {
 
       mainContainer.addTextDisplayComponents(textDisplay);
 
-      const savedScheduledEventMessage = await db.ScheduledEventMessage.findOne(
-        {
-          where: {
-            scheduledEventId: savedEvent.get('id'),
-          },
-        },
-      );
-
       // only send message if not already sent
       if (savedScheduledEventMessage === null) {
         const msg = await this.send(guild, [mainContainer]);
 
+        const savedChannelId = (
+          await db.Channel.findOne({
+            where: {
+              discordId: msg.channel.id,
+            },
+          })
+        )?.get('id');
+
+        if (savedChannelId === null) {
+          throw new Error(
+            `Channel not found for event ${savedEvent.get('id')}`,
+          );
+        }
+
         const savedBotMessage = await db.BotMessage.create({
           discordId: msg.id,
           guildId: savedGuild.get('id'),
+          channelId: savedChannelId,
         });
 
         await db.ScheduledEventMessage.create({
@@ -321,8 +356,6 @@ export class PotiRobotClientWrapper {
   public async prepareGetReadyMessage(
     event: GuildScheduledEvent<GuildScheduledEventStatus>,
   ) {
-    const subscribers = await event.fetchSubscribers();
-
     const startTimeStamp = event.scheduledStartTimestamp;
     if (!startTimeStamp) {
       console.warn('Event has no scheduled start timestamp');
@@ -377,6 +410,7 @@ export class PotiRobotClientWrapper {
     const textDisplay: TextDisplayBuilder = new TextDisplayBuilder();
     const textDisplayContent: string[] = [];
     textDisplayContent.push('## Inscrits :');
+    const subscribers = await event.fetchSubscribers();
     for (const [_subscriberId, subscriber] of subscribers) {
       textDisplayContent.push(`<@${subscriber.user.id}>`);
     }
@@ -466,11 +500,12 @@ export class PotiRobotClientWrapper {
         await db.ScheduledEvent.findOrCreate({
           where: {
             discordId: event.id,
+            name: event.name,
           },
         });
       }
 
-      // clear channel if no BotMessage exists for this guild
+      console.log(`Finished processing guild ${lazyGuild.name}`);
     }
   }
 }

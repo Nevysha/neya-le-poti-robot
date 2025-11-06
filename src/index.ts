@@ -106,4 +106,6 @@ import { databaseInit, db } from './database.ts';
     console.log(`New event created: ${guildEvent.name}`);
     await clientWrapper.prepareAndSendEventRecap(guild);
   });
+
+  console.log('Ready. Waiting...');
 })();

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { DataTypes, Sequelize } from 'sequelize';
 import { PotiRobotClientWrapper } from './PotiRobotClientWrapper.ts';
@@ -58,7 +59,44 @@ const ScheduledEvent = sequelize.define('scheduled_event', {
     allowNull: false,
     unique: true,
   },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+
+  /**
+   * Hash representing all data of this event, used to check if the event has changed
+   * - name,
+   * - scheduledStartTimestamp
+   * - all subscriber.user.id
+   */
+  hash: {
+    type: DataTypes.STRING,
+    allowNull: true,
+  },
 });
+
+/**
+ * Create a hash representing the event
+ *
+ * concatenated string of all relevant data and hash with sha256
+ *
+ * @param name
+ * @param scheduledStartTimestamp
+ * @param subscribers
+ */
+export const createScheduledEventHash = ({
+  name,
+  scheduledStartTimestamp,
+  subscribers,
+}: {
+  name: string;
+  scheduledStartTimestamp: number;
+  subscribers: string[];
+}): string => {
+  const dataString = `${name}${scheduledStartTimestamp}${subscribers.join('')}`;
+  return createHash('sha256').update(dataString).digest('hex');
+};
 
 const BotMessage = sequelize.define('bot_message', {
   id: {
@@ -73,6 +111,8 @@ const BotMessage = sequelize.define('bot_message', {
   },
 });
 BotMessage.belongsTo(Guild);
+BotMessage.belongsTo(Channel);
+Channel.hasMany(BotMessage);
 Guild.hasMany(BotMessage);
 
 const ScheduledEventMessage = sequelize.define('scheduled_event_message', {
