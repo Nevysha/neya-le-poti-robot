@@ -2,3 +2,5 @@
 /.env.prod
 /database.sqlite
 /node_modules/
+/dist
+/potirobot.log
