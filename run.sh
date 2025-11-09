@@ -2,4 +2,4 @@
 
 git pull
 pnpm run build
-EXEC_ENV=prod node dist/index.js
+EXEC_ENV=prod node dist/index.js > potirobot.log 2>&1 &
