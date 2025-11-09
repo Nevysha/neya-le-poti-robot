@@ -5,6 +5,8 @@ if (process.env.EXEC_ENV === null) {
   process.exit(1);
 }
 
+console.log(`Executing in ${process.env.EXEC_ENV} mode`);
+
 type TEnvRaw = {
   DISCORD_TOKEN: string;
   IS_TEST: string;
