@@ -2,4 +2,4 @@
 
 git pull
 pnpm run build
-NODE_EXEC="prod" node dist/index.js
+EXEC_ENV=prod node dist/index.js
