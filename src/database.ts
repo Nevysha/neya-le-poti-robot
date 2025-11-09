@@ -172,7 +172,7 @@ export const databaseInit = async () => {
 
 // check if file is being executed directly
 const execPath = path.resolve(process.argv[1]);
-if (execPath.endsWith('database.ts')) {
+if (execPath.endsWith('database.ts') || execPath.endsWith('database.js')) {
   console.log('Running database.ts');
   (async () => {
     await databaseInit();
