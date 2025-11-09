@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 
-if (process.env.EXEC_ENV === null) {
+if (process.env.EXEC_ENV === null || process.env.EXEC_ENV === undefined) {
   console.error(new Error('EXEC_ENV environment variable is not set'));
   process.exit(1);
 }
