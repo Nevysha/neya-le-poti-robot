@@ -13,8 +13,8 @@ import {
   TextChannel,
   TextDisplayBuilder,
 } from 'discord.js';
-import { Env } from './Env';
-import { createScheduledEventHash, db } from './database';
+import { Env } from './Env.js';
+import { createScheduledEventHash, db } from './database.js';
 
 /**
  * Wrapper around the native discord client to add some features
