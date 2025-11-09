@@ -2,4 +2,4 @@
 
 git pull
 pnpm run build
-node dist/index.js
+NODE_EXEC="prod" node dist/index.js
