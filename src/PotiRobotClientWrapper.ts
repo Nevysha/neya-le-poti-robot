@@ -273,9 +273,18 @@ export class PotiRobotClientWrapper {
         );
       }
 
-      const discordMsg = await (
-        await this.getChannel(guild)
-      ).messages.fetch(savedBotMessage.get('discordId') as string);
+      let discordMsg = null;
+      try {
+        discordMsg = await (
+          await this.getChannel(guild)
+        ).messages.fetch(savedBotMessage.get('discordId') as string);
+      } catch (error) {
+        console.error(
+          `Error fetching message ${savedBotMessage.get('discordId')} for event ${savedEvent.get('id')}`,
+        );
+        console.error(error);
+      }
+
       if (discordMsg === null) {
         throw new Error(
           `Discord message not found for bot message ${savedBotMessage.get('id')}`,
