@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { DataTypes, Sequelize } from 'sequelize';
-import { PotiRobotClientWrapper } from './PotiRobotClientWrapper.ts';
+import { Env } from './Env';
+import { PotiRobotClientWrapper } from './PotiRobotClientWrapper';
 
 const sequelize = new Sequelize('database', 'user', 'password', {
   host: 'localhost',
@@ -176,10 +177,10 @@ if (execPath.endsWith('database.ts')) {
   (async () => {
     await databaseInit();
 
-    // if (Env.RESET_DB) {
-    console.log('Resetting database');
-    await sequelize.sync({ force: true });
-    // }
+    if (Env.RESET_DB) {
+      console.log('Resetting database');
+      await sequelize.sync({ force: true });
+    }
 
     const clientWrapper: PotiRobotClientWrapper =
       await PotiRobotClientWrapper.start();
