@@ -120,5 +120,9 @@ import { databaseInit, db } from './database.js';
   console.log('Setting up refresh task to run every minute.');
   setInterval(taskFn, 60000);
 
+  //run first refresh immediately
+  console.log('Running first refresh immediately');
+  await taskFn();
+
   console.log('Ready. Waiting...');
 })();
