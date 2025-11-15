@@ -2,7 +2,6 @@ import { dbConfig, sequelize } from '#nlpr/database/database.js';
 import { Logger } from '#nlpr/Logger.js';
 import fs from 'fs';
 import path from 'node:path';
-import { DataTypes } from 'sequelize';
 import { AutoOptions, SequelizeAuto } from 'sequelize-auto';
 
 const options = {
@@ -14,16 +13,17 @@ const options = {
   caseModel: 'p',
   caseProp: 'c',
   additional: {
-    createdAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      defaultValue: DataTypes.NOW,
-      allowNull: false,
-    },
+    timestamps: true,
+    // createdAt: {
+    //   type: DataTypes.DATE,
+    //   defaultValue: DataTypes.NOW,
+    //   allowNull: false,
+    // },
+    // updatedAt: {
+    //   type: DataTypes.DATE,
+    //   defaultValue: DataTypes.NOW,
+    //   allowNull: false,
+    // },
   },
 } as AutoOptions;
 
@@ -65,6 +65,11 @@ const clearOutputFolder = () => {
 
   clearOutputFolder();
 
+  const targetDir = options.directory!;
+
+  const alias = targetDir.replace('./src/', '#nlpr/').replace('src/', '#nlpr/');
+  Logger.info(`Setting alias for generated files: ${alias}`);
+
   // run the auto generation
   await auto.run();
 
@@ -80,11 +85,8 @@ const clearOutputFolder = () => {
     // Replace imports like: import {...} from "./BotMessages";
     // with:                   import {...} from "#nlpr/database/auto-models/BotMessages.js";
     content = content
-      .replace(/from '\.\/([^']+)'/g, "from '#nlpr/database/auto-models/$1.js'")
-      .replace(
-        /from "\.\/([^"]+)"/g,
-        'from "#nlpr/database/auto-models/$1.js"',
-      );
+      .replace(/from '\.\/([^']+)'/g, `from '${alias}/$1.js'`)
+      .replace(/from "\.\/([^"]+)"/g, `from '${alias}/$1.js'`);
 
     fs.writeFileSync(filePath, content, 'utf8');
   }
