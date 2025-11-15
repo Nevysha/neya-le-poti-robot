@@ -1,6 +1,11 @@
 import { Logger } from '#nlpr/Logger.ts';
 import { Model } from 'sequelize';
 
+export type TIgnoreTimestamps = {
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
 /**
  * Check if all given models are NevyModels
  *
