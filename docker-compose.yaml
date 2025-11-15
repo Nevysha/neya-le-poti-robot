@@ -4,21 +4,17 @@ services:
     build:
       context: .
       dockerfile: docker/Dockerfile
-    # Replace these with your actual production environment variables
-    # It's recommended to use a .env file for sensitive information
     environment:
       DISCORD_TOKEN: ${DISCORD_TOKEN}
       APP_ID: ${APP_ID}
-      # Set IS_TEST to false explicitly for production, or rely on EXEC_ENV=production
+      # Set IS_TEST to false explicitly for production, or rely on NODE_ENV=prod
       IS_TEST: "false"
       # Set RESET_DB to false for production to prevent database wipes on restart
       RESET_DB: "false"
-      EXEC_ENV: prod
-    # Mount a volume for the sqlite database to ensure data persistence
+      NODE_ENV: prod
     volumes:
       - ./database.sqlite:/app/database.sqlite
     restart: unless-stopped
-    # You can add a network if you plan to connect with other containers in the future
     networks:
       - nginx-proxy-manager_default
 

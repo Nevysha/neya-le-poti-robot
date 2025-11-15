@@ -1,3 +1,5 @@
+import { Env } from '@nlpr/Env.js';
+import { createScheduledEventHash, db } from '@nlpr/database/database.ts';
 import {
   BaseMessageOptions,
   ChannelType,
@@ -13,8 +15,6 @@ import {
   TextChannel,
   TextDisplayBuilder,
 } from 'discord.js';
-import { Env } from './Env.js';
-import { createScheduledEventHash, db } from './database.js';
 
 /**
  * Wrapper around the native discord client to add some features

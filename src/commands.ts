@@ -1,5 +1,5 @@
+import { Env } from '@nlpr/Env.js';
 import { REST, Routes } from 'discord.js';
-import { Env } from './Env.js';
 
 async function refreshCommands() {
   const rest = new REST({ version: '10' }).setToken(Env.DISCORD_TOKEN);

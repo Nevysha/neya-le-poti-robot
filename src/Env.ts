@@ -1,11 +1,11 @@
 import dotenv from 'dotenv';
 
-if (process.env.EXEC_ENV === null || process.env.EXEC_ENV === undefined) {
-  console.error(new Error('EXEC_ENV environment variable is not set'));
+if (process.env.NODE_ENV === null || process.env.NODE_ENV === undefined) {
+  console.error(new Error('NODE_ENV environment variable is not set'));
   process.exit(1);
 }
 
-console.log(`Executing in ${process.env.EXEC_ENV} mode`);
+console.log(`Executing in ${process.env.NODE_ENV} mode`);
 
 type TEnvRaw = {
   DISCORD_TOKEN: string;
@@ -21,7 +21,7 @@ export type TEnv = {
   RESET_DB: boolean;
 };
 
-const mode = process.env.EXEC_ENV || 'development';
+const mode = process.env.NODE_ENV || 'development';
 dotenv.config({ path: '.env' });
 dotenv.config({ path: `./.env.local`, override: true });
 dotenv.config({ path: `./.env.${mode}`, override: true });

@@ -1,8 +1,8 @@
+import { Env } from '@nlpr/Env.ts';
+import { PotiRobotClientWrapper } from '@nlpr/PotiRobotClientWrapper.ts';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { DataTypes, Sequelize } from 'sequelize';
-import { Env } from './Env.js';
-import { PotiRobotClientWrapper } from './PotiRobotClientWrapper.js';
 
 const sequelize = new Sequelize('database', 'user', 'password', {
   host: 'localhost',

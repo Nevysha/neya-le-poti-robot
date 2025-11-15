@@ -19,7 +19,9 @@
     "types": ["node"],
     "outDir": "./var/tsc/node.out",
     "composite": true,
-    "paths": {},
+    "paths": {
+      "@nlpr/*": ["./src/*"]
+    },
     "baseUrl": "./",
     "strict": true,
     "esModuleInterop": true

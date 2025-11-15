@@ -1,6 +1,6 @@
+import { PotiRobotClientWrapper } from '@nlpr/PotiRobotClientWrapper.js';
+import { databaseInit, db } from '@nlpr/database/database.ts';
 import { Events } from 'discord.js';
-import { PotiRobotClientWrapper } from './PotiRobotClientWrapper.js';
-import { databaseInit, db } from './database.js';
 
 (async () => {
   await databaseInit();
