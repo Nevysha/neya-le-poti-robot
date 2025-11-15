@@ -32,6 +32,14 @@ if (!fs.existsSync(HISTORY_FILE)) {
       await clientWrapper.initRolesData();
       break;
     }
+    case 'refresh-events': {
+      const guilds = await clientWrapper.nativeReadyClient.guilds.fetch();
+      for (const lazyGuild of guilds.values()) {
+        const guild = await lazyGuild.fetch();
+        await clientWrapper.refreshEvents(guild);
+      }
+      break;
+    }
     case 'start': {
       await botStart(clientWrapper);
       break;

@@ -233,6 +233,22 @@ export class PotiRobotClientWrapper {
 
       mainContainer.addTextDisplayComponents(textDisplay);
 
+      // check if one role of this guild must be pinged
+      const mustPingRole = await db.Role.findAll({
+        where: {
+          guildId: savedGuild.get('id'),
+          shouldPingOnNewEvent: true,
+        },
+      });
+      if (mustPingRole.length > 0) {
+        const rolesId = mustPingRole.map(
+          (role) => `<@&${role.get('discordId') as string}>`,
+        );
+        mainContainer.addTextDisplayComponents(
+          new TextDisplayBuilder().setContent(rolesId.join(' ')),
+        );
+      }
+
       // only send message if not already sent
       if (savedScheduledEventMessage === null) {
         const msg = await this.send(guild, [mainContainer]);
@@ -558,7 +574,7 @@ export class PotiRobotClientWrapper {
         throw new Error(`Guild ${guild.name} not found in database`);
       }
 
-      const hardCodedRolesToPing = ['Jénoviens'];
+      const hardCodedRolesToPing = ['Jénoviens', 'test-role'];
 
       const roles = await guild.roles.fetch();
       for (const [, role] of roles) {
