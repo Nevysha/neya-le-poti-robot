@@ -15,7 +15,7 @@ export interface ChannelsAttributes {
 
 export type ChannelsPk = "id";
 export type ChannelsId = Channels[ChannelsPk];
-export type ChannelsOptionalAttributes = "id" | "discordId" | "isProd" | "createdAt" | "updatedAt" | "guildId";
+export type ChannelsOptionalAttributes = "id" | "discordId" | "isProd" | "guildId";
 export type ChannelsCreationAttributes = Optional<ChannelsAttributes, ChannelsOptionalAttributes>;
 
 export class Channels extends Model<ChannelsAttributes, ChannelsCreationAttributes> implements ChannelsAttributes {
@@ -66,6 +66,14 @@ export class Channels extends Model<ChannelsAttributes, ChannelsCreationAttribut
       allowNull: true,
       defaultValue: false
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
     guildId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -77,7 +85,7 @@ export class Channels extends Model<ChannelsAttributes, ChannelsCreationAttribut
   }, {
     sequelize,
     tableName: 'channels',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "sqlite_autoindex_channels_1",

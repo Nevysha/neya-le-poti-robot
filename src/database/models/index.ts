@@ -54,7 +54,7 @@ fs.readdirSync(__dirname)
     );
   })
   .forEach((file) => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const modelFactory = require(path.join(__dirname, file)) as (
       sequelize: Sequelize,
       dataTypes: typeof DataTypes,

@@ -14,7 +14,7 @@ export interface GetReadyMessagesAttributes {
 
 export type GetReadyMessagesPk = "id";
 export type GetReadyMessagesId = GetReadyMessages[GetReadyMessagesPk];
-export type GetReadyMessagesOptionalAttributes = "id" | "createdAt" | "updatedAt" | "guildId" | "scheduledEventId";
+export type GetReadyMessagesOptionalAttributes = "id" | "guildId" | "scheduledEventId";
 export type GetReadyMessagesCreationAttributes = Optional<GetReadyMessagesAttributes, GetReadyMessagesOptionalAttributes>;
 
 export class GetReadyMessages extends Model<GetReadyMessagesAttributes, GetReadyMessagesCreationAttributes> implements GetReadyMessagesAttributes {
@@ -49,6 +49,14 @@ export class GetReadyMessages extends Model<GetReadyMessagesAttributes, GetReady
       allowNull: false,
       unique: true
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
     guildId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -68,7 +76,7 @@ export class GetReadyMessages extends Model<GetReadyMessagesAttributes, GetReady
   }, {
     sequelize,
     tableName: 'get_ready_messages',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "sqlite_autoindex_get_ready_messages_1",

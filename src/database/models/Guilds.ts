@@ -15,7 +15,7 @@ export interface GuildsAttributes {
 
 export type GuildsPk = "id";
 export type GuildsId = Guilds[GuildsPk];
-export type GuildsOptionalAttributes = "id" | "createdAt" | "updatedAt";
+export type GuildsOptionalAttributes = "id";
 export type GuildsCreationAttributes = Optional<GuildsAttributes, GuildsOptionalAttributes>;
 
 export class Guilds extends Model<GuildsAttributes, GuildsCreationAttributes> implements GuildsAttributes {
@@ -90,11 +90,19 @@ export class Guilds extends Model<GuildsAttributes, GuildsCreationAttributes> im
     name: {
       type: DataTypes.STRING(255),
       allowNull: false
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
     }
   }, {
     sequelize,
     tableName: 'guilds',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "sqlite_autoindex_guilds_1",

@@ -4,3 +4,4 @@
 /node_modules/
 /dist
 /potirobot.log
+/database.cpy.sqlite

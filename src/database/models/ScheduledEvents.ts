@@ -15,7 +15,7 @@ export interface ScheduledEventsAttributes {
 
 export type ScheduledEventsPk = "id";
 export type ScheduledEventsId = ScheduledEvents[ScheduledEventsPk];
-export type ScheduledEventsOptionalAttributes = "id" | "name" | "readyMessageSent" | "hash" | "createdAt" | "updatedAt";
+export type ScheduledEventsOptionalAttributes = "id" | "name" | "readyMessageSent" | "hash";
 export type ScheduledEventsCreationAttributes = Optional<ScheduledEventsAttributes, ScheduledEventsOptionalAttributes>;
 
 export class ScheduledEvents extends Model<ScheduledEventsAttributes, ScheduledEventsCreationAttributes> implements ScheduledEventsAttributes {
@@ -77,11 +77,19 @@ export class ScheduledEvents extends Model<ScheduledEventsAttributes, ScheduledE
     hash: {
       type: DataTypes.STRING(255),
       allowNull: true
+    },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
     }
   }, {
     sequelize,
     tableName: 'scheduled_events',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "sqlite_autoindex_scheduled_events_1",

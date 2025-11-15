@@ -17,3 +17,7 @@ export const Logger = pino({
     },
   },
 });
+
+export const LOG_SEPARATOR = chalk.gray(
+  '------------------------------------------------------',
+);

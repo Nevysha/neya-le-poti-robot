@@ -1,5 +1,5 @@
 import { dbConfig, sequelize } from '#nlpr/database/database.js';
-import { Logger } from '#nlpr/Logger.js';
+import { LOG_SEPARATOR, Logger } from '#nlpr/Logger.js';
 import fs from 'fs';
 import path from 'node:path';
 import { AutoOptions, SequelizeAuto } from 'sequelize-auto';
@@ -13,7 +13,7 @@ const options = {
   caseModel: 'p',
   caseProp: 'c',
   additional: {
-    timestamps: true,
+    timestamps: false,
     // createdAt: {
     //   type: DataTypes.DATE,
     //   defaultValue: DataTypes.NOW,
@@ -61,14 +61,15 @@ const clearOutputFolder = () => {
 };
 
 (async () => {
+  Logger.info(LOG_SEPARATOR);
   Logger.info('Running SequelizeAutoModelGenerate script...');
+  Logger.info(LOG_SEPARATOR);
 
+  Logger.info(LOG_SEPARATOR);
   clearOutputFolder();
+  Logger.info(LOG_SEPARATOR);
 
   const targetDir = options.directory!;
-
-  const alias = targetDir.replace('./src/', '#nlpr/').replace('src/', '#nlpr/');
-  Logger.info(`Setting alias for generated files: ${alias}`);
 
   // run the auto generation
   await auto.run();
@@ -77,6 +78,9 @@ const clearOutputFolder = () => {
   const files = fs
     .readdirSync(targetDir)
     .filter((file) => file.endsWith('.ts'));
+
+  const alias = targetDir.replace('./src/', '#nlpr/').replace('src/', '#nlpr/');
+  Logger.info(`Import alias for generated files: ${alias}`);
 
   for (const file of files) {
     const filePath = path.join(targetDir, file);
@@ -98,7 +102,6 @@ const clearOutputFolder = () => {
     Logger.info(`- ${file}`);
   }
 
-  // TODO delete files no longer needed
-
+  Logger.info(LOG_SEPARATOR);
   Logger.info('SequelizeAutoModelGenerate script completed successfully.');
 })();

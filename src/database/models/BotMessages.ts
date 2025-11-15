@@ -15,7 +15,7 @@ export interface BotMessagesAttributes {
 
 export type BotMessagesPk = "id";
 export type BotMessagesId = BotMessages[BotMessagesPk];
-export type BotMessagesOptionalAttributes = "id" | "createdAt" | "updatedAt" | "guildId" | "channelId";
+export type BotMessagesOptionalAttributes = "id" | "guildId" | "channelId";
 export type BotMessagesCreationAttributes = Optional<BotMessagesAttributes, BotMessagesOptionalAttributes>;
 
 export class BotMessages extends Model<BotMessagesAttributes, BotMessagesCreationAttributes> implements BotMessagesAttributes {
@@ -62,6 +62,14 @@ export class BotMessages extends Model<BotMessagesAttributes, BotMessagesCreatio
       allowNull: false,
       unique: true
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
     guildId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -81,7 +89,7 @@ export class BotMessages extends Model<BotMessagesAttributes, BotMessagesCreatio
   }, {
     sequelize,
     tableName: 'bot_messages',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "sqlite_autoindex_bot_messages_1",

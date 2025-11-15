@@ -1,4 +1,4 @@
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 import { Model } from 'sequelize';
 
 export type TIgnoreTimestamps = {

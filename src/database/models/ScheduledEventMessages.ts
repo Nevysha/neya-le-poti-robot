@@ -15,7 +15,7 @@ export interface ScheduledEventMessagesAttributes {
 
 export type ScheduledEventMessagesPk = "id";
 export type ScheduledEventMessagesId = ScheduledEventMessages[ScheduledEventMessagesPk];
-export type ScheduledEventMessagesOptionalAttributes = "id" | "createdAt" | "updatedAt" | "scheduledEventId" | "botMessageId" | "guildId";
+export type ScheduledEventMessagesOptionalAttributes = "id" | "scheduledEventId" | "botMessageId" | "guildId";
 export type ScheduledEventMessagesCreationAttributes = Optional<ScheduledEventMessagesAttributes, ScheduledEventMessagesOptionalAttributes>;
 
 export class ScheduledEventMessages extends Model<ScheduledEventMessagesAttributes, ScheduledEventMessagesCreationAttributes> implements ScheduledEventMessagesAttributes {
@@ -50,6 +50,14 @@ export class ScheduledEventMessages extends Model<ScheduledEventMessagesAttribut
       primaryKey: true,
       unique: true
     },
+    createdAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
+    updatedAt: {
+      type: DataTypes.DATE,
+      allowNull: false
+    },
     scheduledEventId: {
       type: DataTypes.UUID,
       allowNull: true,
@@ -77,7 +85,7 @@ export class ScheduledEventMessages extends Model<ScheduledEventMessagesAttribut
   }, {
     sequelize,
     tableName: 'scheduled_event_messages',
-    timestamps: true,
+    timestamps: false,
     indexes: [
       {
         name: "sqlite_autoindex_scheduled_event_messages_1",
