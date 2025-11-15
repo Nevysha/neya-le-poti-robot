@@ -5,8 +5,11 @@
     "noEmit": false,
     "moduleResolution": "bundler",
     "module": "ESNext",
-    "target": "ESNext"
+    "target": "ESNext",
+    "paths": {
+      "#nlpr/*": ["./src/*"]
+    }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": ["node_modules", "*.d.ts"]
 }

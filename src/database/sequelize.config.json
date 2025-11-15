@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "user",
+    "password": "password",
+    "host": "localhost",
+    "dialect": "sqlite",
+    "logging": true,
+    "storage": "database.sqlite"
+  },
+  "test": {
+    "username": "user",
+    "password": "password",
+    "host": "localhost",
+    "dialect": "sqlite",
+    "logging": true,
+    "storage": "database.sqlite"
+  },
+  "prod": {
+    "username": "user",
+    "password": "password",
+    "host": "localhost",
+    "dialect": "sqlite",
+    "logging": false,
+    "storage": "database.sqlite"
+  }
+}

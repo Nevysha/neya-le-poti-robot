@@ -1,4 +1,12 @@
 {
+  // Most ts-node options can be specified here using their programmatic names.
+  "ts-node": {
+    "require": ["tsconfig-paths/register"],
+
+    "transpileOnly": true,
+
+    "files": true
+  },
   "compilerOptions": {
     "tsBuildInfoFile": "./.tsbuildinfo/tsconfig.base.node.tsbuildinfo",
     "skipLibCheck": true,
@@ -20,7 +28,7 @@
     "outDir": "./var/tsc/node.out",
     "composite": true,
     "paths": {
-      "@nlpr/*": ["./src/*"]
+      "#nlpr/*": ["./src/*"]
     },
     "baseUrl": "./",
     "strict": true,
@@ -35,6 +43,7 @@
     "prettier/**/*.json5",
     "prettier/**/*.json",
     "src/**/*.ts",
+    "src/**/*.json",
     "src"
   ]
 }

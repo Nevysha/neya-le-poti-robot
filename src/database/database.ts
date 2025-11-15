@@ -1,15 +1,22 @@
-import { Env } from '@nlpr/Env.ts';
-import { PotiRobotClientWrapper } from '@nlpr/PotiRobotClientWrapper.ts';
+import { Env } from '#nlpr/Env.js';
+import { PotiRobotClientWrapper } from '#nlpr/PotiRobotClientWrapper.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
-import { DataTypes, Sequelize } from 'sequelize';
+import { DataTypes, Options, Sequelize } from 'sequelize';
 
-const sequelize = new Sequelize('database', 'user', 'password', {
+export const dbConfig = {
   host: 'localhost',
   dialect: 'sqlite',
   logging: false,
   storage: 'database.sqlite',
-});
+} as Options;
+
+export const sequelize = new Sequelize(
+  'database',
+  'user',
+  'password',
+  dbConfig,
+);
 
 const Guild = sequelize.define('guild', {
   id: {
@@ -173,7 +180,7 @@ export const databaseInit = async () => {
 // check if file is being executed directly
 const execPath = path.resolve(process.argv[1]);
 if (execPath.endsWith('database.ts') || execPath.endsWith('database.js')) {
-  console.log('Running database.ts');
+  console.log('Running database.js');
   (async () => {
     await databaseInit();
 

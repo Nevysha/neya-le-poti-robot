@@ -1,5 +1,5 @@
-import { Env } from '@nlpr/Env.js';
-import { createScheduledEventHash, db } from '@nlpr/database/database.ts';
+import { Env } from '#nlpr/Env.js';
+import { createScheduledEventHash, db } from '#nlpr/database/database.js';
 import {
   BaseMessageOptions,
   ChannelType,

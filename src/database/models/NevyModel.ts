@@ -1,3 +1,4 @@
+import { Logger } from '#nlpr/Logger.ts';
 import { Model } from 'sequelize';
 
 /**
@@ -38,6 +39,8 @@ export abstract class NevyModel extends Model {
   }
 
   defineAssociation(models: Model[]): void {
-    console.log('No association defined for', this.constructor.name);
+    Logger.error(
+      `Cannot define association for ${this.constructor.name} for models: ${models.map((model) => model.constructor.name).join(', ')}`,
+    );
   }
 }

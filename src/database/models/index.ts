@@ -1,9 +1,8 @@
+import sequelizeConfig from '#nlpr/database/sequelize.config.module.js';
 import fs from 'fs';
 import path from 'path';
 import process from 'process';
 import { DataTypes, Model, ModelStatic, Sequelize } from 'sequelize';
-
-import sequelizeConfig = require('@nlpr/database/sequelize.config.js');
 
 const basename = path.basename(__filename);
 const env = (process.env.NODE_ENV ||

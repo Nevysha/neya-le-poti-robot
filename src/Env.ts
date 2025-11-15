@@ -22,10 +22,10 @@ export type TEnv = {
 };
 
 const mode = process.env.NODE_ENV || 'development';
-dotenv.config({ path: '.env' });
-dotenv.config({ path: `./.env.local`, override: true });
-dotenv.config({ path: `./.env.${mode}`, override: true });
-dotenv.config({ path: `./.env.${mode}.local`, override: true });
+dotenv.config({ quiet: true, path: '.env' });
+dotenv.config({ quiet: true, path: `./.env.local`, override: true });
+dotenv.config({ quiet: true, path: `./.env.${mode}`, override: true });
+dotenv.config({ quiet: true, path: `./.env.${mode}.local`, override: true });
 const { RESET_DB, ...EnvRaw } = process.env as TEnvRaw;
 
 export const Env: TEnv = {

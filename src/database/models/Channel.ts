@@ -1,4 +1,4 @@
-import { NevyModel } from '@nlpr/database/models/NevyModel.ts';
+import { NevyModel } from '#nlpr/database/models/NevyModel.js';
 import { Sequelize, DataTypes as SequelizeDataTypes } from 'sequelize';
 
 const Channel = (

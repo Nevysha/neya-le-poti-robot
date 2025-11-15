@@ -1,4 +1,4 @@
-import { Env } from '@nlpr/Env.js';
+import { Env } from '#nlpr/Env.js';
 import { REST, Routes } from 'discord.js';
 
 async function refreshCommands() {

@@ -1,4 +1,5 @@
-import type { Options as SequelizeOptions } from 'sequelize';
+import type { Options as SequelizeOptions } from 'sequelize/lib/sequelize';
+import config from './sequelize.config.json' with { type: 'json' };
 
 type Options = SequelizeOptions & {
   use_env_variable?: string;
@@ -12,6 +13,4 @@ export interface NeyaSequelizeConfig {
   prod: Options;
 }
 
-declare const config: NeyaSequelizeConfig;
-
-export = config;
+export default config as NeyaSequelizeConfig;
