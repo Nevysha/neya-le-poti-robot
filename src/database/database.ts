@@ -1,4 +1,5 @@
 import { Env } from '#nlpr/Env.js';
+import { Logger } from '#nlpr/Logger.ts';
 import { PotiRobotClientWrapper } from '#nlpr/PotiRobotClientWrapper.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
@@ -155,6 +156,24 @@ GetReadyMessage.belongsTo(ScheduledEvent);
 Guild.hasMany(GetReadyMessage);
 ScheduledEvent.hasOne(GetReadyMessage);
 
+const Role = sequelize.define('role', {
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  discordId: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
+  shouldPingOnNewEvent: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+});
+Role.belongsTo(Guild);
+Guild.hasMany(Role);
+
 export const db = {
   sequelize,
   Guild,
@@ -162,37 +181,30 @@ export const db = {
   ScheduledEvent,
   BotMessage,
   ScheduledEventMessage,
+  Role,
 };
 
 export const databaseInit = async () => {
+  Logger.info('Sync database');
   await sequelize.sync();
-
-  return {
-    sequelize,
-    Guild,
-    Channel,
-    ScheduledEvent,
-    BotMessage,
-    ScheduledEventMessage,
-  };
 };
 
 // check if file is being executed directly
 const execPath = path.resolve(process.argv[1]);
 if (execPath.endsWith('database.ts') || execPath.endsWith('database.js')) {
-  console.log('Running database.js');
+  Logger.info('Running database.js');
   (async () => {
     await databaseInit();
 
     if (Env.RESET_DB) {
-      console.log('Resetting database');
+      Logger.info('Resetting database');
       await sequelize.sync({ force: true });
     }
 
     const clientWrapper: PotiRobotClientWrapper =
       await PotiRobotClientWrapper.start();
     await clientWrapper.maybeInitData();
-    console.log('Database initialized');
+    Logger.info('Database initialized');
     await clientWrapper.nativeReadyClient.destroy();
   })();
 }

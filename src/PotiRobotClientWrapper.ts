@@ -1,4 +1,5 @@
 import { Env } from '#nlpr/Env.js';
+import { Logger } from '#nlpr/Logger.ts';
 import { createScheduledEventHash, db } from '#nlpr/database/database.js';
 import {
   BaseMessageOptions,
@@ -32,23 +33,25 @@ export class PotiRobotClientWrapper {
    *
    */
   static async start(): Promise<PotiRobotClientWrapper> {
+    Logger.info('Connecting to Discord...');
     const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
-    return new Promise(async (resolve, reject) => {
-      try {
-        client.once(Events.ClientReady, async (readyClient) => {
-          console.log(`Ready! Logged in as ${readyClient.user.tag}`);
+    return new Promise((resolve, reject) => {
+      (async () => {
+        try {
+          client.once(Events.ClientReady, async (readyClient) => {
+            Logger.info(`Ready! Logged in as ${readyClient.user.tag}`);
 
-          const commands = await readyClient.application.commands.fetch();
-          console.log(commands.map((command) => command.name).join(', '));
+            const commands = await readyClient.application.commands.fetch();
+            Logger.info(commands.map((command) => command.name).join(', '));
+            resolve(new PotiRobotClientWrapper(readyClient));
+          });
 
-          resolve(new PotiRobotClientWrapper(readyClient));
-        });
-
-        await client.login(Env.DISCORD_TOKEN);
-      } catch (error) {
-        reject(error);
-      }
+          await client.login(Env.DISCORD_TOKEN);
+        } catch (error) {
+          reject(error);
+        }
+      })();
     });
   }
 
@@ -58,7 +61,7 @@ export class PotiRobotClientWrapper {
    * @param guild
    */
   public async clearMessages(guild: Guild) {
-    console.log(`Clearing messages for guild ${guild.name}`);
+    Logger.info(`Clearing messages for guild ${guild.name}`);
 
     const channel = await this.getChannel(guild);
     await channel.messages.fetch();
@@ -136,11 +139,11 @@ export class PotiRobotClientWrapper {
       (a, b) =>
         (a.scheduledStartTimestamp ?? 0) - (b.scheduledStartTimestamp ?? 0),
     );
-    console.log(
+    Logger.info(
       `Found ${events.size} events [${events.map((event) => event.name).join(', ')}]`,
     );
 
-    for (const [_eventId, event] of events) {
+    for (const [, event] of events) {
       const [savedEvent] = await db.ScheduledEvent.findOrCreate({
         where: {
           discordId: event.id,
@@ -168,7 +171,7 @@ export class PotiRobotClientWrapper {
         savedScheduledEventMessage !== null &&
         receivedEventHash === savedEvent.get('hash')
       ) {
-        console.log(`No change on event ${event.name}. Skipping.`);
+        Logger.info(`No change on event ${event.name}. Skipping.`);
         continue;
       }
 
@@ -223,7 +226,7 @@ export class PotiRobotClientWrapper {
       const textDisplay: TextDisplayBuilder = new TextDisplayBuilder();
       const textDisplayContent: string[] = [];
       textDisplayContent.push('## Inscrits :');
-      for (const [_subscriberId, subscriber] of subscribers) {
+      for (const [, subscriber] of subscribers) {
         textDisplayContent.push(`- ${subscriber.user.displayName}`);
       }
       textDisplay.setContent(textDisplayContent.join('\n'));
@@ -305,7 +308,7 @@ export class PotiRobotClientWrapper {
   public async maybeSendReadyMessages(guild: Guild) {
     const events = await guild.scheduledEvents.fetch();
 
-    for (const [_eventId, event] of events) {
+    for (const [, event] of events) {
       await this.maybeSendReadyMessagesForEvent(guild, event);
     }
   }
@@ -333,7 +336,7 @@ export class PotiRobotClientWrapper {
 
     const readyMessageSent = savedEvent.get('readyMessageSent');
     if (readyMessageSent) {
-      console.log(`Event ${event.name}: get ready message already sent`);
+      Logger.info(`Event ${event.name}: get ready message already sent`);
       return;
     }
 
@@ -348,7 +351,7 @@ export class PotiRobotClientWrapper {
       return;
     }
 
-    console.log(`Event ${event.name} starting in ${startingIn / 1000} seconds`);
+    Logger.info(`Event ${event.name} starting in ${startingIn / 1000} seconds`);
     const components = await this.prepareGetReadyMessage(event);
 
     await this.send(guild, components);
@@ -356,7 +359,7 @@ export class PotiRobotClientWrapper {
     // update readyMessageSent
     savedEvent.set('readyMessageSent', true);
     await savedEvent.save();
-    console.log(`Event ${event.name}: get ready message sent`);
+    Logger.info(`Event ${event.name}: get ready message sent`);
   }
 
   /**
@@ -439,7 +442,7 @@ export class PotiRobotClientWrapper {
     const textDisplayContent: string[] = [];
     textDisplayContent.push('## Inscrits :');
     const subscribers = await event.fetchSubscribers();
-    for (const [_subscriberId, subscriber] of subscribers) {
+    for (const [, subscriber] of subscribers) {
       textDisplayContent.push(`<@${subscriber.user.id}>`);
     }
     textDisplay.setContent(textDisplayContent.join('\n'));
@@ -460,13 +463,13 @@ export class PotiRobotClientWrapper {
   public async refreshEvents(guild: Guild) {
     guild = await guild.fetch();
 
-    console.log(`Fetching for guild ${guild.name}`);
+    Logger.info(`Fetching for guild ${guild.name}`);
 
     await this.prepareAndSendEventRecap(guild);
 
     await this.maybeSendReadyMessages(guild);
 
-    console.log(`Finished refreshing events for guild ${guild.name}`);
+    Logger.info(`Finished refreshing events for guild ${guild.name}`);
   }
 
   public async maybeInitData() {
@@ -475,15 +478,15 @@ export class PotiRobotClientWrapper {
     let mustCreateChannels = false;
     const allSavedChannels = await db.Channel.findAll();
     if (allSavedChannels.length === 0) {
-      console.log('No channels found in database. Channels will be created...');
+      Logger.info('No channels found in database. Channels will be created...');
       mustCreateChannels = true;
     }
 
-    for (const [_guildId, lazyGuild] of guilds) {
-      console.log(`Processing guild ${lazyGuild.name}`);
+    for (const [, lazyGuild] of guilds) {
+      Logger.info(`Processing guild ${lazyGuild.name}`);
       const guild = await lazyGuild.fetch();
       // check if guild exists in database
-      let [savedGuild] = await db.Guild.findOrCreate({
+      const [savedGuild] = await db.Guild.findOrCreate({
         where: {
           discordId: lazyGuild.id,
           name: lazyGuild.name,
@@ -519,12 +522,12 @@ export class PotiRobotClientWrapper {
       }
 
       const events = await guild.scheduledEvents.fetch();
-      console.log(
+      Logger.info(
         `Found events ${events.map((event) => event.name).join(', ')} `,
       );
 
-      for (const [_eventId, event] of events) {
-        console.log(`Processing event ${event.name}`);
+      for (const [, event] of events) {
+        Logger.info(`Processing event ${event.name}`);
         await db.ScheduledEvent.findOrCreate({
           where: {
             discordId: event.id,
@@ -533,7 +536,44 @@ export class PotiRobotClientWrapper {
         });
       }
 
-      console.log(`Finished processing guild ${lazyGuild.name}`);
+      Logger.info(`Finished processing guild ${lazyGuild.name}`);
+    }
+  }
+
+  /**
+   * Fetch all roles from all guilds and save them in the database
+   */
+  public async initRolesData() {
+    const guilds = await this.nativeReadyClient.guilds.fetch();
+    for (const [, lazyGuild] of guilds) {
+      const guild = await lazyGuild.fetch();
+
+      const savedGuild = await db.Guild.findOne({
+        where: {
+          discordId: guild.id,
+          name: guild.name,
+        },
+      });
+      if (savedGuild === null) {
+        throw new Error(`Guild ${guild.name} not found in database`);
+      }
+
+      const hardCodedRolesToPing = ['Jénoviens'];
+
+      const roles = await guild.roles.fetch();
+      for (const [, role] of roles) {
+        const shouldPing = hardCodedRolesToPing.includes(role.name);
+        if (shouldPing) Logger.info(`Role ${role.name} will be pinged`);
+
+        await db.Role.findOrCreate({
+          where: {
+            discordId: role.id,
+            name: role.name,
+            guildId: savedGuild.get('id'),
+            shouldPingOnNewEvent: shouldPing,
+          },
+        });
+      }
     }
   }
 }

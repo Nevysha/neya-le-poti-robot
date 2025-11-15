@@ -1,4 +1,5 @@
 import { Env } from '#nlpr/Env.js';
+import { Logger } from '#nlpr/Logger.ts';
 import { REST, Routes } from 'discord.js';
 
 async function refreshCommands() {
@@ -20,13 +21,13 @@ async function refreshCommands() {
   ];
 
   try {
-    console.log('Started refreshing application (/) commands.');
+    Logger.info('Started refreshing application (/) commands.');
 
     await rest.put(Routes.applicationCommands(Env.APP_ID), {
       body: commands,
     });
 
-    console.log('Successfully reloaded application (/) commands.');
+    Logger.info('Successfully reloaded application (/) commands.');
   } catch (error) {
     console.error(error);
   }

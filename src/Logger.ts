@@ -1,22 +1,10 @@
 import chalk from 'chalk';
 import pino from 'pino';
+import pretty from 'pino-pretty';
 
 export { chalk };
 
-export const Logger = pino({
-  level: 'debug',
-  // level: 'debug',
-  // level: 'info',
-  customLevels: {
-    verbose: 35,
-  },
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-    },
-  },
-});
+export const Logger = pino(pretty({ sync: true }));
 
 export const LOG_SEPARATOR = chalk.gray(
   '------------------------------------------------------',

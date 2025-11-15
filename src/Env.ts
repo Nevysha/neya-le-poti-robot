@@ -1,3 +1,4 @@
+import { Logger } from '#nlpr/Logger.ts';
 import dotenv from 'dotenv';
 
 if (process.env.NODE_ENV === null || process.env.NODE_ENV === undefined) {
@@ -5,7 +6,7 @@ if (process.env.NODE_ENV === null || process.env.NODE_ENV === undefined) {
   process.exit(1);
 }
 
-console.log(`Executing in ${process.env.NODE_ENV} mode`);
+Logger.info(`Executing in ${process.env.NODE_ENV} mode`);
 
 type TEnvRaw = {
   DISCORD_TOKEN: string;
