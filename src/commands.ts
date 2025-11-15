@@ -1,5 +1,5 @@
 import { Env } from '#nlpr/Env.js';
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 import { REST, Routes } from 'discord.js';
 
 async function refreshCommands() {

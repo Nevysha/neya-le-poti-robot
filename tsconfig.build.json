@@ -12,5 +12,10 @@
     }
   },
   "include": ["src/**/*.ts", "src/**/*.json"],
-  "exclude": ["node_modules", "*.d.ts"]
+  "exclude": [
+    "node_modules",
+    "*.d.ts",
+    "src/bin/SequelizeAutoModelGenerate.ts",
+    "src/bin/sequelize-auto-test.ts"
+  ]
 }

@@ -1,4 +1,4 @@
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 import dotenv from 'dotenv';
 
 if (process.env.NODE_ENV === null || process.env.NODE_ENV === undefined) {

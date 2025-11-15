@@ -1,5 +1,5 @@
 import { Env } from '#nlpr/Env.js';
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 import { createScheduledEventHash, db } from '#nlpr/database/database.js';
 import {
   BaseMessageOptions,

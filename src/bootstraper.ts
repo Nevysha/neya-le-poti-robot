@@ -1,4 +1,4 @@
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 import { PotiRobotClientWrapper } from '#nlpr/PotiRobotClientWrapper.js';
 import { databaseInit, db } from '#nlpr/database/database.js';
 import { Events } from 'discord.js';

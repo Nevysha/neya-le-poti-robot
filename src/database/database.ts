@@ -1,5 +1,5 @@
 import { Env } from '#nlpr/Env.js';
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 import { PotiRobotClientWrapper } from '#nlpr/PotiRobotClientWrapper.js';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
