@@ -1,5 +1,5 @@
 import { bootstrap, botPrepare } from '#nlpr/bootstraper.js';
-import { Logger } from '#nlpr/Logger.ts';
+import { Logger } from '#nlpr/Logger.js';
 
 const run = async () => {
   const clientWrapper = await bootstrap();
