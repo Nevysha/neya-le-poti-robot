@@ -1,4 +1,4 @@
-import { bootstrap, botStart } from '#nlpr/bootstraper.js';
+import { bootstrap, botPrepare } from '#nlpr/bootstraper.js';
 import { Logger } from '#nlpr/Logger.js';
 import { input } from '@inquirer/prompts';
 import fs from 'fs';
@@ -41,7 +41,7 @@ if (!fs.existsSync(HISTORY_FILE)) {
       break;
     }
     case 'start': {
-      await botStart(clientWrapper);
+      await botPrepare(clientWrapper);
       break;
     }
     default: {

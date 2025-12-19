@@ -9,7 +9,7 @@ export const dbConfig = {
   host: 'localhost',
   dialect: 'sqlite',
   logging: false,
-  storage: 'database.sqlite',
+  storage: 'db/database.sqlite',
 } as Options;
 
 export const sequelize = new Sequelize(

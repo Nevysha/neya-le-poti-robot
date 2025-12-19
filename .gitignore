@@ -6,3 +6,5 @@
 /potirobot.log
 /database.cpy.sqlite
 /.nlpr.history
+/db/database.sqlite
+/remote/

@@ -9,7 +9,7 @@ export const bootstrap = async () => {
   return await PotiRobotClientWrapper.start();
 };
 
-export const botStart = async (clientWrapper: PotiRobotClientWrapper) => {
+export const botPrepare = async (clientWrapper: PotiRobotClientWrapper) => {
   await clientWrapper.maybeInitData();
 
   clientWrapper.on(Events.InteractionCreate, async (interaction) => {
@@ -49,7 +49,20 @@ export const botStart = async (clientWrapper: PotiRobotClientWrapper) => {
           // do not await
           void (async () => {
             await channel.messages.fetch();
-            await channel.bulkDelete(channel.messages.cache);
+            // await channel.bulkDelete(channel.messages.cache);
+
+            // delete all message individually to avoid 15 days limit
+            for (const message of channel.messages.cache.values()) {
+              try {
+                await message.delete();
+              } catch (e) {
+                Logger.error(
+                  `Error deleting message ${message.id}: ${message.content}`,
+                );
+                Logger.error(e);
+              }
+            }
+
             await db.ScheduledEventMessage.destroy({
               where: {
                 guildId: guild.id,
@@ -63,6 +76,17 @@ export const botStart = async (clientWrapper: PotiRobotClientWrapper) => {
             Logger.info(`Cleared messages in ${channel.name}`);
           })();
           await interaction.reply('Clearing channel messages...');
+          break;
+        }
+        case 'clear-db-events': {
+          await interaction.reply('Clearing event from database...');
+          void (async () => {
+            await db.ScheduledEvent.destroy({
+              where: {
+                guildId: guild.id,
+              },
+            });
+          })();
           break;
         }
         default: {
@@ -123,12 +147,27 @@ export const botStart = async (clientWrapper: PotiRobotClientWrapper) => {
       await clientWrapper.refreshEvents(guild);
     }
   };
-  Logger.info('Setting up refresh task to run every minute.');
-  setInterval(taskFn, 60000);
 
   //run first refresh immediately
   Logger.info('Running first refresh immediately');
   await taskFn();
 
   Logger.info('Ready. Waiting...');
+
+  let repeater: null | NodeJS.Timeout = null;
+
+  return {
+    autorun: () => {
+      Logger.info('Setting up refresh task to run every minute.');
+      repeater = setInterval(taskFn, 60000);
+    },
+    destroy: async () => {
+      Logger.info('Destroying refresh task.');
+      if (repeater) {
+        clearInterval(repeater);
+        repeater = null;
+      }
+      await clientWrapper.nativeReadyClient.destroy();
+    },
+  };
 };

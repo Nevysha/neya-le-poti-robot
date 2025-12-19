@@ -18,6 +18,10 @@ async function refreshCommands() {
       name: 'clear-channel',
       description: 'Clear current channel',
     },
+    {
+      name: 'clear-db-events',
+      description: 'Clear all scheduled events from database',
+    },
   ];
 
   try {

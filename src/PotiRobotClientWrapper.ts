@@ -1,6 +1,8 @@
 import { Env } from '#nlpr/Env.js';
 import { Logger } from '#nlpr/Logger.js';
 import { createScheduledEventHash, db } from '#nlpr/database/database.js';
+import { format } from 'date-fns/format';
+import { fr } from 'date-fns/locale';
 import {
   BaseMessageOptions,
   ChannelType,
@@ -187,21 +189,16 @@ export class PotiRobotClientWrapper {
       }
 
       // format to locale fr-FR in format dd/mm/yyyy hh:mm:ss
-      const formattedDate = new Date(startTimeStamp).toLocaleDateString(
-        'fr-FR',
-        {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-        },
-      );
+      const formattedDate = format(new Date(startTimeStamp), 'PPPPp', {
+        locale: fr,
+      });
       const mainContainer = new ContainerBuilder().setAccentColor(0xe0569b);
 
       const header = new TextDisplayBuilder().setContent(
         '# ' + event.name + '\n\n' + formattedDate,
+      );
+      const subscriberCount = new TextDisplayBuilder().setContent(
+        `_Nombre d'inscrits : ${subscribers.size}_`,
       );
       const eventUrl = new TextDisplayBuilder().setContent(event.url);
 
@@ -209,6 +206,7 @@ export class PotiRobotClientWrapper {
       if (coverImageURL) {
         const sectionBuilder = new SectionBuilder()
           .addTextDisplayComponents(header)
+          .addTextDisplayComponents(subscriberCount)
           .addTextDisplayComponents(eventUrl);
 
         sectionBuilder.setThumbnailAccessory((thumbnail) =>
@@ -410,13 +408,8 @@ export class PotiRobotClientWrapper {
     }
 
     // format to locale fr-FR in format dd/mm/yyyy hh:mm:ss
-    const formattedDate = new Date(startTimeStamp).toLocaleDateString('fr-FR', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    const formattedDate = format(new Date(startTimeStamp), 'PPPPp', {
+      locale: fr,
     });
     const mainContainer = new ContainerBuilder().setAccentColor(0x0099ff);
 
