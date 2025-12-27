@@ -8,3 +8,4 @@
 /.nlpr.history
 /db/*.sqlite
 /remote/
+/*.log
