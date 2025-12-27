@@ -403,6 +403,44 @@ export class PotiRobotClientWrapper {
     });
   }
 
+  public async sendCrashAlert() {
+    // get TDJ guild
+    const partialTdjGuild = (await this.nativeReadyClient.guilds.fetch()).find(
+      (guild) => guild.name === 'TDJ',
+    );
+    if (!partialTdjGuild) {
+      throw new Error('TDJ guild not found');
+    }
+
+    const tdjGuild = await partialTdjGuild.fetch();
+
+    //get channel 1434813225769238639 (admin-stuff)
+    const adminChannelUnsafeType = (await tdjGuild.channels.fetch()).find(
+      (ch) => ch?.id === '1434813225769238639',
+    );
+    if (!adminChannelUnsafeType) {
+      throw new Error('Admin channel not found');
+    }
+
+    if (adminChannelUnsafeType.type !== ChannelType.GuildText) {
+      throw new Error(
+        `Channel ${adminChannelUnsafeType.name} is not a text channel`,
+      );
+    }
+
+    const mainContainer = new ContainerBuilder().setAccentColor(0xff0000);
+    mainContainer.addTextDisplayComponents(
+      new TextDisplayBuilder().setContent(
+        `${Env.IS_TEST ? 'TEST TEST TEST -- ' : ''} I'm sorry but I think I'm gonna crash. Please restart me ! <@196722000473882625>`,
+      ),
+    );
+
+    return await adminChannelUnsafeType.send({
+      components: [mainContainer],
+      flags: MessageFlags.IsComponentsV2,
+    });
+  }
+
   /**
    * Prepare a message to send when an event is starting soon
    *

@@ -18,7 +18,8 @@ const run = async () => {
     Logger.error(`Crash count: ${crashCount}`);
 
     if (crashCount > 10) {
-      Logger.error('Too many crashes, exiting...');
+      Logger.error('Too many crashes, Reporting and exiting...');
+      await clientWrapper.sendCrashAlert();
       process.exit(1);
     }
 
