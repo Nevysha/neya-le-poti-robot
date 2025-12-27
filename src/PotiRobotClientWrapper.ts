@@ -332,10 +332,12 @@ export class PotiRobotClientWrapper {
    *
    * @param guild
    * @param event
+   * @param retryCount
    */
   public async maybeSendReadyMessagesForEvent(
     guild: Guild,
     event: GuildScheduledEvent<GuildScheduledEventStatus>,
+    retryCount = 0,
   ) {
     const savedEvent = await db.ScheduledEvent.findOne({
       where: {
@@ -345,7 +347,15 @@ export class PotiRobotClientWrapper {
     });
 
     if (savedEvent === null) {
-      throw new Error(`Event ${event.name} not found in database`);
+      if (retryCount > 0) {
+        throw new Error(`Event ${event.name} not found in database`);
+      }
+      Logger.warn(
+        `Event ${event.name} not found in database. Trying to repair... `,
+      );
+      await this.prepareAndSendEventRecap(guild);
+      await this.maybeSendReadyMessagesForEvent(guild, event, retryCount + 1);
+      return;
     }
 
     const readyMessageSent = savedEvent.get('readyMessageSent');
