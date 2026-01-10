@@ -6,3 +6,5 @@ services:
     environment:
       NODE_ENV: "prod"
     restart: unless-stopped
+    volumes:
+      - ./db:/usr/share/neya-le-poti-robot/db

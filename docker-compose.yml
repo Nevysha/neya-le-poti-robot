@@ -5,3 +5,5 @@ services:
     container_name: neya-le-poti-robot
     environment:
       NODE_ENV: "development"
+    volumes:
+      - ./db:/usr/share/neya-le-poti-robot/db
