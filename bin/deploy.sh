@@ -1,5 +1,3 @@
 #!/bin/bash
 
-git pull
-pnpm run build
-sudo docker compose up -d --build
+sudo docker compose -f ./docker-compose.prod.yml -p neya-le-poti-robot up -d --build
