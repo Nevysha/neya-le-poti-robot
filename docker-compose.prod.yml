@@ -1,0 +1,8 @@
+services:
+  neya-le-poti-robot:
+    build: .
+    image: neya-le-poti-robot
+    container_name: neya-le-poti-robot
+    environment:
+      NODE_ENV: "prod"
+    restart: unless-stopped
