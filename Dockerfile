@@ -10,8 +10,6 @@ COPY . /usr/share/neya-le-poti-robot
 RUN rm -rf /usr/share/neya-le-poti-robot/node_modules
 RUN rm -rf /usr/share/neya-le-poti-robot/dist
 
-RUN ls -la /usr/share/neya-le-poti-robot
-
 RUN pnpm install
 RUN pnpm run build
 
